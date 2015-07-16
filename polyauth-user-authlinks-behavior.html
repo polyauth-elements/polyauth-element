@@ -1,0 +1,115 @@
+<!--
+@license
+The MIT License
+
+Copyright (c) 2015 Andrei Nesterov <ae.nesterov@polyauth.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+-->
+
+<link rel='import' href='../polymer/polymer.html'>
+<link rel='import' href='../polyauth/polyauth.html'>
+
+<script>
+
+	PolyAuth.UserAuthLinksBehavior = {
+
+		properties: {
+
+			apiv: String,
+			realmId: String,
+			redirectUri: String,
+			op: {
+				type: String,
+				value: 'm/link'
+			},
+
+			iconShape: {
+				type: String,
+				value: 'square'
+			},
+
+			keys: {
+				type: Array,
+				value: function() { return PolyAuth.Key.all(); }
+			},
+			objects: Array,
+			objectsProxy: {
+				type: Array,
+				notify: true,
+				computed: '_computeObjectsProxy(apiv, realmId, redirectUri, op, iconShape, keys, objects)'
+			}
+
+		},
+
+		_handle: function(index) {
+			var entry = this.objectsProxy[index];
+			if (!entry.removed) { this._removeProxyIndex(index); }
+			else { window.location.href = entry.authCodeURI; }
+		},
+
+		_computeObjectsProxy: function(apiv, realmId, redirectUri, op, iconShape, keys, objects) {
+			if (!objects) { return []; }
+
+			return keys.map(function(key) {
+				var detail = PolyAuth.Key.parse(key);
+				var object =
+					objects.filter(function(entry) {
+						return key === PolyAuth.Key.key(PolyAuth.Key.parse(entry.id));
+					})[0];
+
+				object = object || {};
+				object.removed = object.id ? false : true;
+				object.authCodeURI = this._authCodeURI(key);
+				object.icon = this._icon(detail);
+				object.key = key;
+				Object.keys(detail)
+					.forEach(function(dkey) {
+						object[dkey] = detail[dkey];
+					});
+
+				return object;
+			}, this);
+		},
+
+		_icon: function(detail) {
+			return this.iconShape + '-brand:' + detail.prov;
+		},
+
+		_authCodeURI: function(key) {
+			return PolyAuth.authCodeURI(this.realmId, {
+				apiv: this.apiv,
+				key: key,
+				redirectURI: this.redirectUri,
+				op: this.op
+			});
+		},
+
+		_removeProxyIndex: function(index) {
+			var id = this.objectsProxy[index].id;
+			return PolyAuth.FetchBehavior._fetch.call(this, this._resource(id).remove())
+				.then(function() {
+					var prop = 'objectsProxy.' + index + '.removed';
+					this.set(prop, true);
+				}.bind(this));
+		}
+
+	};
+
+</script>

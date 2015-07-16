@@ -1,0 +1,31 @@
+{
+  "name": "polyauth-element",
+  "version": "0.1.0",
+	"description": "Webcomponents for the PolyAuth Web API",
+  "main": [
+    "polyauth-signin.html"
+  ],
+  "authors": [
+    "Andrei Nesterov <ae.nesterov@polyauth.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "*.md",
+    "bower_components",
+    "test",
+    "demo"
+  ],
+  "keywords": [
+    "polyauth",
+    "web-component",
+    "web-components",
+    "polymer",
+    "sign-in",
+    "authentication"
+  ],
+  "dependencies": {
+    "polymer": "^1.0.0",
+    "polyauth": "^0.1.4"
+  }
+}

@@ -1,0 +1,81 @@
+<!--
+@license
+The MIT License
+
+Copyright (c) 2015 Andrei Nesterov <ae.nesterov@polyauth.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+-->
+
+<link rel='import' href='../polymer/polymer.html'>
+<link rel='import' href='polyauth-fetch-behavior.html'>
+
+<script>
+
+	PolyAuth.UserAuthsBehavior = {
+
+		properties: {
+			apiv: String,
+			accessToken: String,
+			userId: String,
+			objects: {
+				type: Array,
+				notify: true
+			},
+			auto: {
+				type: Boolean,
+				value: false
+			}
+		},
+
+		observers: [
+			'_handleAutoFetch(apiv, userId, accessToken)'
+		],
+
+		_handleAutoFetch: function(v, userId, token) {
+			if (token && this.auto) {
+				this._get();
+			}
+		},
+
+		_get: function() {
+			return PolyAuth.FetchBehavior._fetch.call(this, this._resource().list())
+				.then(function(objects) {
+					this.set('objects', objects);
+				}.bind(this));
+		},
+
+		_removeIndex: function(index) {
+			var id = this.objects[index].id;
+			return PolyAuth.FetchBehavior._fetch.call(this, this._resource(id).remove())
+				.then(function() {
+					this.splice('objects', index, 1);
+				}.bind(this));
+		},
+
+		_resource: function(id) {
+			var userId = this.userId;
+			var token = this.accessToken;
+			var v = this.apiv;
+			return PolyAuth.api(token, v).user(userId).auth(id);
+		}
+
+	};
+
+</script>
